@@ -1,9 +1,10 @@
 import { useState, type FC } from 'react';
 import { ExternalLink, Check, Calendar, BookOpen, Sparkles } from 'lucide-react';
-import { Issue } from '../data/types';
+import { EnrichedIssue } from '../data/types';
+import { getSeriesBadgeClasses } from '../data/seriesData';
 
 interface IssueCardProps {
-  issue: Issue;
+  issue: EnrichedIssue;
   isSelected: boolean;
   isPrior: boolean;
   onSelect: () => void;
@@ -33,7 +34,7 @@ export const IssueCard: FC<IssueCardProps> = ({
         {!imgError && issue.coverUrl ? (
           <img
             src={issue.coverUrl}
-            alt={`${issue.seriesTitle} #${issue.issueNumber} cover`}
+            alt={`${issue.series.title} #${issue.issueNumber} cover`}
             loading="lazy"
             onError={() => setImgError(true)}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -46,7 +47,7 @@ export const IssueCard: FC<IssueCardProps> = ({
             </div>
             <div className="space-y-1 my-auto">
               <div className="text-sm font-extrabold text-slate-100 leading-tight">
-                {issue.seriesTitle}
+                {issue.series.title}
               </div>
               <div className="text-2xl font-black text-yellow-400">
                 #{issue.issueNumber}
@@ -98,9 +99,11 @@ export const IssueCard: FC<IssueCardProps> = ({
           {/* Series Badge & Release Date */}
           <div className="flex items-center justify-between gap-2 text-xs mb-1.5">
             <span
-              className={`px-2 py-0.5 rounded font-semibold text-[11px] border ${issue.seriesColor}`}
+              className={`px-2 py-0.5 rounded font-semibold text-[11px] border ${getSeriesBadgeClasses(
+                issue.series.color
+              )}`}
             >
-              {issue.seriesTitle}
+              {issue.series.shortTitle || issue.series.title}
             </span>
 
             <span className="flex items-center gap-1 text-[11px] text-slate-400 shrink-0">

@@ -48,7 +48,7 @@ export const ProgressionHUD: FC<ProgressionHUDProps> = ({
 
             <div className="flex items-center gap-2">
               <span className="font-bold text-white text-base">
-                {selectedIssue.seriesTitle} #{selectedIssue.issueNumber}
+                {selectedIssue.series.title} #{selectedIssue.issueNumber}
               </span>
               {selectedIssue.title && (
                 <span className="text-slate-400 text-sm hidden sm:inline">
@@ -74,7 +74,7 @@ export const ProgressionHUD: FC<ProgressionHUDProps> = ({
               }`}
               title={
                 stats.previousIssue
-                  ? `Previous: ${stats.previousIssue.seriesTitle} #${stats.previousIssue.issueNumber}`
+                  ? `Previous: ${stats.previousIssue.series.title} #${stats.previousIssue.issueNumber}`
                   : 'At first issue'
               }
             >
@@ -92,7 +92,7 @@ export const ProgressionHUD: FC<ProgressionHUDProps> = ({
               }`}
               title={
                 stats.nextIssue
-                  ? `Next: ${stats.nextIssue.seriesTitle} #${stats.nextIssue.issueNumber}`
+                  ? `Next: ${stats.nextIssue.series.title} #${stats.nextIssue.issueNumber}`
                   : 'At last issue'
               }
             >
@@ -157,7 +157,7 @@ export const ProgressionHUD: FC<ProgressionHUDProps> = ({
           <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80">
             <div className="flex justify-between items-center text-xs mb-1.5">
               <span className="font-semibold text-slate-300 truncate pr-2">
-                {selectedIssue.seriesTitle}
+                {selectedIssue.series.title}
               </span>
               <span className="font-extrabold text-blue-400">
                 {Math.round((stats.seriesCurrentIndex / stats.seriesTotalCount) * 100)}%

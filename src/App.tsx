@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { ProgressionHUD } from './components/ProgressionHUD';
 import { PhaseNav } from './components/PhaseNav';
-import { SeriesFilter } from './components/SeriesFilter';
+import { SeriesFilter, SeriesOption } from './components/SeriesFilter';
 import { IssueCard } from './components/IssueCard';
 import { FROM_THE_ASHES_ERA } from './data/fromTheAshesData';
 import { useProgression } from './hooks/useProgression';
@@ -10,38 +10,53 @@ import { FilterX } from 'lucide-react';
 
 export function App() {
   const era = FROM_THE_ASHES_ERA;
-  const { stats, selectIssue, clearSelection, goToPrevious, goToNext } =
-    useProgression(era);
+  const {
+    allEnrichedIssues,
+    stats,
+    selectIssue,
+    clearSelection,
+    goToPrevious,
+    goToNext,
+  } = useProgression(era);
 
   const [activePhaseId, setActivePhaseId] = useState<string | 'all'>('all');
   const [selectedSeriesId, setSelectedSeriesId] = useState<string | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Extract all unique series in the currently selected phase (or all phases)
-  const availableSeriesIds = useMemo(() => {
-    const seriesSet = new Set<string>();
-    const targetPhases =
-      activePhaseId === 'all'
-        ? era.phases
-        : era.phases.filter((p) => p.id === activePhaseId);
+  const totalEraIssues = allEnrichedIssues.length;
 
-    targetPhases.forEach((phase) => {
-      phase.series.forEach((s) => seriesSet.add(s));
+  // Extract all unique series with their title and count directly from the issues in scope
+  const availableSeries: SeriesOption[] = useMemo(() => {
+    const targetIssues =
+      activePhaseId === 'all'
+        ? allEnrichedIssues
+        : allEnrichedIssues.filter((i) => i.phaseId === activePhaseId);
+
+    const map = new Map<string, { label: string; count: number }>();
+
+    targetIssues.forEach((issue) => {
+      const existing = map.get(issue.seriesId);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        const cleanLabel = issue.series.shortTitle || issue.series.title;
+        map.set(issue.seriesId, { label: cleanLabel, count: 1 });
+      }
     });
 
-    return Array.from(seriesSet);
-  }, [era, activePhaseId]);
+    return Array.from(map.entries()).map(([id, data]) => ({
+      id,
+      label: data.label,
+      count: data.count,
+    }));
+  }, [allEnrichedIssues, activePhaseId]);
 
   // Filter issues according to Phase, Series, and Search
   const filteredIssues = useMemo(() => {
-    // 1. Phase filtering
     let issues =
       activePhaseId === 'all'
-        ? era.phases.flatMap((p) => p.issues)
-        : era.phases.find((p) => p.id === activePhaseId)?.issues || [];
-
-    // Sort by master reading order sequence
-    issues = [...issues].sort((a, b) => a.readingOrderNumber - b.readingOrderNumber);
+        ? allEnrichedIssues
+        : allEnrichedIssues.filter((i) => i.phaseId === activePhaseId);
 
     // 2. Series filtering
     if (selectedSeriesId !== 'all') {
@@ -53,7 +68,8 @@ export function App() {
       const q = searchQuery.toLowerCase().trim();
       issues = issues.filter(
         (i) =>
-          i.seriesTitle.toLowerCase().includes(q) ||
+          i.series.title.toLowerCase().includes(q) ||
+          (i.series.shortTitle && i.series.shortTitle.toLowerCase().includes(q)) ||
           (i.title && i.title.toLowerCase().includes(q)) ||
           String(i.issueNumber).includes(q) ||
           i.writers?.some((w) => w.toLowerCase().includes(q)) ||
@@ -63,7 +79,7 @@ export function App() {
     }
 
     return issues;
-  }, [era, activePhaseId, selectedSeriesId, searchQuery]);
+  }, [allEnrichedIssues, activePhaseId, selectedSeriesId, searchQuery]);
 
   const activeSelected = stats.selectedIssue;
 
@@ -96,7 +112,7 @@ export function App() {
                   Current Era ({era.startYear}–Present)
                 </span>
                 <span className="text-slate-600">&bull;</span>
-                <span className="text-xs text-slate-400">{era.totalIssues} Issues in Reading Order</span>
+                <span className="text-xs text-slate-400">{totalEraIssues} Issues in Reading Order</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                 {era.title}
@@ -118,17 +134,17 @@ export function App() {
                 setActivePhaseId(phase);
                 setSelectedSeriesId('all');
               }}
-              totalIssuesCount={era.totalIssues}
+              totalIssuesCount={totalEraIssues}
             />
 
             <div className="text-xs font-semibold text-slate-400 whitespace-nowrap self-end sm:self-auto">
               Showing <span className="text-yellow-400">{filteredIssues.length}</span> of{' '}
-              {era.totalIssues} issues
+              {totalEraIssues} issues
             </div>
           </div>
 
           <SeriesFilter
-            availableSeriesIds={availableSeriesIds}
+            availableSeries={availableSeries}
             selectedSeriesId={selectedSeriesId}
             onSelectSeries={setSelectedSeriesId}
           />

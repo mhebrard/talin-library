@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Era, Issue, ProgressionStats } from '../data/types';
+import { Era, Series, EnrichedIssue, ProgressionStats, composeIssueId } from '../data/types';
+import { LIBRARY_SERIES } from '../data/seriesData';
 
-export function useProgression(era: Era) {
+export function useProgression(
+  era: Era,
+  seriesMap: Record<string, Series> = LIBRARY_SERIES
+) {
   // Read initial params from window.location.search
   const getParams = () => {
     const params = new URLSearchParams(window.location.search);
@@ -22,29 +26,51 @@ export function useProgression(era: Era) {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Flatten all issues in the era across phases sorted by master readingOrderNumber
-  const allIssues = useMemo(() => {
-    const list: Issue[] = [];
+  // Dynamically enrich all issues with reading sequence order, phase info, and series mapping
+  const allEnrichedIssues = useMemo(() => {
+    const list: EnrichedIssue[] = [];
+    let masterReadingOrder = 1;
+
     era.phases.forEach((phase) => {
-      list.push(...phase.issues);
+      phase.issues.forEach((rawIssue, phaseIdx) => {
+        const seriesDef = seriesMap[rawIssue.seriesId] || {
+          id: rawIssue.seriesId,
+          title: rawIssue.seriesId,
+          shortTitle: rawIssue.seriesId,
+          launchYear: era.startYear,
+          color: 'slate',
+        };
+
+        list.push({
+          ...rawIssue,
+          id: composeIssueId(rawIssue.seriesId, rawIssue.issueNumber),
+          readingOrderNumber: masterReadingOrder++,
+          phaseReadingOrderNumber: phaseIdx + 1,
+          phaseId: phase.id,
+          series: seriesDef,
+        });
+      });
     });
-    return list.sort((a, b) => a.readingOrderNumber - b.readingOrderNumber);
-  }, [era]);
+
+    return list;
+  }, [era, seriesMap]);
 
   // Find currently selected issue
   const selectedIssue = useMemo(() => {
     if (!activeParams.seriesId || !activeParams.issueNumber) return null;
     return (
-      allIssues.find(
+      allEnrichedIssues.find(
         (i) =>
           i.seriesId === activeParams.seriesId &&
           String(i.issueNumber).toLowerCase() === activeParams.issueNumber.toLowerCase()
       ) || null
     );
-  }, [allIssues, activeParams]);
+  }, [allEnrichedIssues, activeParams]);
 
   // Progression calculation
   const stats: ProgressionStats = useMemo(() => {
+    const eraTotalCount = allEnrichedIssues.length;
+
     if (!selectedIssue) {
       return {
         selectedIssue: null,
@@ -53,7 +79,7 @@ export function useProgression(era: Era) {
         phaseTotalCount: 0,
         eraProgressPercent: 0,
         eraCurrentIndex: 0,
-        eraTotalCount: allIssues.length,
+        eraTotalCount,
         seriesCurrentIndex: 0,
         seriesTotalCount: 0,
         previousIssue: null,
@@ -67,21 +93,20 @@ export function useProgression(era: Era) {
     const phaseCurrentIndex = selectedIssue.phaseReadingOrderNumber;
     const phaseProgressPercent = Math.round((phaseCurrentIndex / phaseTotalCount) * 100);
 
-    const eraTotalCount = allIssues.length;
     const eraCurrentIndex = selectedIssue.readingOrderNumber;
     const eraProgressPercent = Math.round((eraCurrentIndex / eraTotalCount) * 100);
 
     // Series progression
-    const seriesIssues = allIssues.filter((i) => i.seriesId === selectedIssue.seriesId);
+    const seriesIssues = allEnrichedIssues.filter((i) => i.seriesId === selectedIssue.seriesId);
     const seriesCurrentIndex =
       seriesIssues.findIndex((i) => i.id === selectedIssue.id) + 1;
     const seriesTotalCount = seriesIssues.length;
 
     // Adjacent issues in reading order
-    const currentIndexInAll = allIssues.findIndex((i) => i.id === selectedIssue.id);
-    const previousIssue = currentIndexInAll > 0 ? allIssues[currentIndexInAll - 1] : null;
+    const currentIndexInAll = allEnrichedIssues.findIndex((i) => i.id === selectedIssue.id);
+    const previousIssue = currentIndexInAll > 0 ? allEnrichedIssues[currentIndexInAll - 1] : null;
     const nextIssue =
-      currentIndexInAll < allIssues.length - 1 ? allIssues[currentIndexInAll + 1] : null;
+      currentIndexInAll < allEnrichedIssues.length - 1 ? allEnrichedIssues[currentIndexInAll + 1] : null;
 
     return {
       selectedIssue,
@@ -96,7 +121,7 @@ export function useProgression(era: Era) {
       previousIssue,
       nextIssue,
     };
-  }, [selectedIssue, era, allIssues]);
+  }, [selectedIssue, era, allEnrichedIssues]);
 
   // Update URL and state
   const selectIssue = useCallback((seriesId: string, issueNumber: string | number) => {
@@ -131,7 +156,7 @@ export function useProgression(era: Era) {
   }, [stats.nextIssue, selectIssue]);
 
   return {
-    allIssues,
+    allEnrichedIssues,
     selectedIssue,
     stats,
     selectIssue,

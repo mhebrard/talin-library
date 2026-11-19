@@ -1,15 +1,20 @@
 import type { FC } from 'react';
 import { Tag } from 'lucide-react';
-import { SERIES_META } from '../data/fromTheAshesData';
+
+export interface SeriesOption {
+  id: string;
+  label: string;
+  count: number;
+}
 
 interface SeriesFilterProps {
-  availableSeriesIds: string[];
+  availableSeries: SeriesOption[];
   selectedSeriesId: string | 'all';
   onSelectSeries: (seriesId: string | 'all') => void;
 }
 
 export const SeriesFilter: FC<SeriesFilterProps> = ({
-  availableSeriesIds,
+  availableSeries,
   selectedSeriesId,
   onSelectSeries,
 }) => {
@@ -31,22 +36,21 @@ export const SeriesFilter: FC<SeriesFilterProps> = ({
         All Series
       </button>
 
-      {availableSeriesIds.map((seriesId) => {
-        const meta = SERIES_META[seriesId];
-        const isSelected = selectedSeriesId === seriesId;
-        const displayName = meta ? meta.shortTitle : seriesId;
+      {availableSeries.map((series) => {
+        const isSelected = selectedSeriesId === series.id;
 
         return (
           <button
-            key={seriesId}
-            onClick={() => onSelectSeries(isSelected ? 'all' : seriesId)}
+            key={series.id}
+            onClick={() => onSelectSeries(isSelected ? 'all' : series.id)}
             className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-all ${
               isSelected
                 ? 'bg-yellow-500 text-black border-yellow-400 font-bold shadow-sm'
                 : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-700'
             }`}
           >
-            {displayName}
+            <span>{series.label}</span>
+            <span className="text-[10px] opacity-70 ml-1">({series.count})</span>
           </button>
         );
       })}
