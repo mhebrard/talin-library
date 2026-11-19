@@ -231,3 +231,13 @@ Each comic entry includes an `onlineLibraryUrl`:
 
 - **Default links:** Direct digital library or catalog link (e.g. Marvel Unlimited or digital reader).
 - **Custom Library Setting (Optional):** A quick preference toggle in the header allowing the user to route links to their preferred digital provider or search portal.
+
+---
+
+## 7. Content Updates
+
+### Request
+
+> "Edit From the Ashes era phase 1 issues: it starts with X-Men 2024 #1-#7. Get the cover image and info from [https://www.marvel.com/comics]. Use batcave.biz as online library."
+>
+> After X-Men 1-7, continue with Uncanny X-Men 1-6, then Exceptional X-Men 1-5".
