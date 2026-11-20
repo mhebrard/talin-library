@@ -11,7 +11,12 @@ export type SeriesColor =
   | 'stone'
   | 'rose'
   | 'indigo'
-  | 'slate';
+  | 'slate'
+  | 'lime'
+  | 'pink'
+  | 'teal'
+  | 'sky'
+  | 'violet';
 
 // Global series definition in scope of the library
 export interface Series {

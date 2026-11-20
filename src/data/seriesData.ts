@@ -83,6 +83,36 @@ export const SERIES_COLOR_VARIANTS: Record<
     border: 'border-slate-700/50',
     badge: 'bg-slate-900 text-slate-300 border-slate-700/50',
   },
+  lime: {
+    bg: 'bg-lime-950',
+    text: 'text-lime-300',
+    border: 'border-lime-700/50',
+    badge: 'bg-lime-950 text-lime-300 border-lime-700/50',
+  },
+  pink: {
+    bg: 'bg-pink-950',
+    text: 'text-pink-300',
+    border: 'border-pink-700/50',
+    badge: 'bg-pink-950 text-pink-300 border-pink-700/50',
+  },
+  teal: {
+    bg: 'bg-teal-950',
+    text: 'text-teal-300',
+    border: 'border-teal-700/50',
+    badge: 'bg-teal-950 text-teal-300 border-teal-700/50',
+  },
+  sky: {
+    bg: 'bg-sky-950',
+    text: 'text-sky-300',
+    border: 'border-sky-700/50',
+    badge: 'bg-sky-950 text-sky-300 border-sky-700/50',
+  },
+  violet: {
+    bg: 'bg-violet-950',
+    text: 'text-violet-300',
+    border: 'border-violet-700/50',
+    badge: 'bg-violet-950 text-violet-300 border-violet-700/50',
+  },
 };
 
 /**
@@ -178,5 +208,47 @@ export const LIBRARY_SERIES: Record<string, Series> = {
     shortTitle: 'Psylocke',
     launchYear: 2024,
     color: 'indigo',
+  },
+  'hellverine-2024': {
+    id: 'hellverine-2024',
+    title: 'Hellverine (2024)',
+    shortTitle: 'Hellverine',
+    launchYear: 2024,
+    color: 'lime',
+  },
+  'laura-kinney-wolverine-2024': {
+    id: 'laura-kinney-wolverine-2024',
+    title: 'Laura Kinney: Wolverine (2024)',
+    shortTitle: 'Laura Kinney',
+    launchYear: 2024,
+    color: 'slate',
+  },
+  'dazzler-2024': {
+    id: 'dazzler-2024',
+    title: 'Dazzler (2024)',
+    shortTitle: 'Dazzler',
+    launchYear: 2024,
+    color: 'pink',
+  },
+  'cable-love-and-chrome-2025': {
+    id: 'cable-love-and-chrome-2025',
+    title: 'Cable: Love and Chrome (2025)',
+    shortTitle: 'Cable',
+    launchYear: 2025,
+    color: 'teal',
+  },
+  'magik-2025': {
+    id: 'magik-2025',
+    title: 'Magik (2025)',
+    shortTitle: 'Magik',
+    launchYear: 2025,
+    color: 'violet',
+  },
+  'mystique-2024': {
+    id: 'mystique-2024',
+    title: 'Mystique (2024)',
+    shortTitle: 'Mystique',
+    launchYear: 2024,
+    color: 'sky',
   },
 };
