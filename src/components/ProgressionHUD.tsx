@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { ChevronLeft, ChevronRight, X, Compass, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Compass, CheckCircle2, Layers } from 'lucide-react';
 import { ProgressionStats } from '../data/types';
 
 interface ProgressionHUDProps {
@@ -60,6 +60,13 @@ export const ProgressionHUD: FC<ProgressionHUDProps> = ({
             <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
               Reading Order #{selectedIssue.readingOrderNumber} of {stats.eraTotalCount}
             </span>
+
+            {stats.selectedGroup && stats.groupTotalCount > 1 && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
+                <Layers className="w-3.5 h-3.5 text-yellow-400" />
+                Part {stats.groupCurrentIndex} of {stats.groupTotalCount} &bull; {stats.selectedGroup.title}
+              </span>
+            )}
           </div>
 
           {/* Stepper Buttons & Clear */}
