@@ -106,10 +106,9 @@ export interface ProgressionStats {
   eraProgressPercent: number;      // e.g. 24%
   eraCurrentIndex: number;         // e.g. 18
   eraTotalCount: number;           // e.g. 75
-  seriesCurrentIndex: number;      // e.g. 3
-  seriesTotalCount: number;        // e.g. 6
   selectedGroup: EnrichedGroup | null;
-  groupCurrentIndex: number;       // e.g. 3 (Part 3 of 7)
+  groupProgressPercent: number;    // e.g. 43%
+  groupCurrentIndex: number;       // e.g. 3 (Issue 3 of 7 in X-Men #1–7)
   groupTotalCount: number;         // e.g. 7
   previousIssue: EnrichedIssue | null;
   nextIssue: EnrichedIssue | null;

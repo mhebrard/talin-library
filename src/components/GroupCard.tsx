@@ -151,17 +151,6 @@ export const GroupCard: FC<GroupCardProps> = ({
             </div>
           )}
 
-          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md border border-slate-700/60 text-slate-200 text-xs font-bold shadow-md">
-            <span>{orderRange(group)}</span>
-            <span className="text-[10px] text-slate-400 font-normal">in order</span>
-          </div>
-
-          {isPrior && (
-            <div className="absolute top-2.5 right-2.5 z-10 px-1.5 py-0.5 rounded bg-slate-900/80 backdrop-blur-md border border-slate-700 text-slate-400 text-[10px] font-semibold">
-              Preceding
-            </div>
-          )}
-
           <div className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md border border-slate-700/60 text-slate-100 text-xs font-bold">
             <Layers className="w-3.5 h-3.5 text-yellow-400" />
             {countLabel}

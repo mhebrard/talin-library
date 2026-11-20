@@ -193,6 +193,12 @@ export function App() {
       {/* Sticky Progression HUD based on currently selected issue */}
       <ProgressionHUD
         stats={stats}
+        eraTitle={era.title}
+        phaseLabel={
+          stats.selectedIssue
+            ? `Phase ${era.phases.find((p) => p.id === stats.selectedIssue?.phaseId)?.number ?? ''}`
+            : ''
+        }
         onClear={clearSelection}
         onPrevious={goToPrevious}
         onNext={goToNext}

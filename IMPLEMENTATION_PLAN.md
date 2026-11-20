@@ -12,7 +12,7 @@
 
 > - **No Local Progress Tracking / Checkboxes:** On issue cards, no need for reading status toggles (`Unread` / `Reading` / `Read`).
 > - **No Search/Filter by Read Status:** Focus filtering purely on Series, Phase, and text search.
-> - **Dynamic Progression Metrics Based on Selected Issue:** Instead of manual checkboxes, progression metrics calculate dynamically based on the currently selected issue (e.g. *Selecting X-Factor #3 displays: "You are at X% of Phase 1, Y% of Era, Issue 3 of 6 in X-Factor"*).
+> - **Dynamic Progression Metrics Based on Selected Issue:** Instead of manual checkboxes, progression metrics calculate dynamically based on the currently selected issue (e.g. *Selecting X-Men #3 displays: "You are at X% of the Era, Y% of Phase 1, Issue 3 of 7 in X-Men #1–7"*).
 > - **Distinct URL Parameters with Series Launch Year:** Instead of a single dash-separated slug, separate the parameters distinctly: `?series=[series-id]&issue=[issue-number]` (e.g. `?series=x-men-2024&issue=1`, `?series=x-factor-2024&issue=3`). The series handle includes the launch year to clearly distinguish *X-Men 2024* from *X-Men 2013* without string-splitting or hyphen-parsing ambiguities.
 > - **Issue Groups (Series Runs & Crossovers):** Issues are organized into groups. Consecutive issues of the same series form one group (e.g. *X-Men #1–7*). A crossover is also one group, containing issues from several series (e.g. *Raid on Graymalkin*). On the front page, groups are collapsed and show the cover of their first issue; selecting a group expands it to show all of its issues.
 > - **Decoupled Content & Placeholders:** The technical plan and codebase are decoupled from specific comic issue lists. The implementation will use placeholder issues and covers within the *From the Ashes* era structure, allowing content to be populated and updated via data files independently.
@@ -34,11 +34,10 @@ The goal is to build a sleek, comic-book-inspired static web application hosted 
    - **Chronological Reading Order:** Step-by-step master sequence interleaving *X-Men*, *Uncanny X-Men*, *Exceptional X-Men*, *X-Force*, *Phoenix*, *NYX*, *X-Factor*, *Wolverine*, *Storm*, and miniseries.
 2. **Current Issue Selection & Progression Metrics (The "You Are Here" Marker):**
    - Click to select any issue as your current reading position.
-   - **Real-time dynamic progression metrics:**
-     - **Phase Progress:** e.g., Issue #18 of 36 in Phase 1 → 50% of Phase 1 completed.
-     - **Overall Era Progress:** e.g., Issue #18 of 75 in Era → 24% of Era completed.
-     - **Series Progress:** e.g., Issue #3 of 6 in *X-Factor* → 50% of X-Factor.
-     - **Group Position:** e.g., *Part 3 of 7 • X-Men #1–7*.
+   - **Real-time dynamic progression metrics** (displayed in this order):
+     1. **Era Progress:** e.g., Issue #18 of 75 in Era → 24% of Era completed.
+     2. **Phase Progress:** e.g., Issue #18 of 36 in Phase 1 → 50% of Phase 1 completed.
+     3. **Group Progress:** e.g., Issue 3 of 7 in *X-Men #1–7* → 43% of the group. For a crossover, this is the position in the crossover story (e.g. Issue 3 of 5 in *Raid on Graymalkin*).
    - Visual timeline sequence:
      - Clear highlighted "Current Reading Position" marker.
      - Issues prior in the sequence are visually marked as *Preceding / Read up to this point*.
@@ -91,7 +90,7 @@ talin-library/
 │   │   ├── seriesData.ts           # Library-wide series registry & badge colors
 │   │   └── fromTheAshesData.ts     # Curated reading order for From the Ashes (phases → groups → issues)
 │   ├── hooks/
-│   │   └── useProgression.ts       # Enriches groups/issues; calculates % of Phase, % of Era, series & group progress
+│   │   └── useProgression.ts       # Enriches groups/issues; calculates % of Era, % of Phase and % of Group
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
@@ -202,10 +201,9 @@ export interface ProgressionStats {
   eraProgressPercent: number;      // e.g. 24%
   eraCurrentIndex: number;         // e.g. 18
   eraTotalCount: number;           // e.g. 75
-  seriesCurrentIndex: number;      // e.g. 3
-  seriesTotalCount: number;        // e.g. 6
   selectedGroup: EnrichedGroup | null;
-  groupCurrentIndex: number;       // e.g. 3 (Part 3 of 7)
+  groupProgressPercent: number;    // e.g. 43%
+  groupCurrentIndex: number;       // e.g. 3 (Issue 3 of 7 in X-Men #1–7)
   groupTotalCount: number;         // e.g. 7
   previousIssue: EnrichedIssue | null;
   nextIssue: EnrichedIssue | null;
@@ -233,11 +231,10 @@ When an issue is selected (e.g. clicking on a series issue):
 
 - **Current Location Banner:**
   - Displays selected issue details and position in sequence: `"📍 Currently At: [Series Title] #[Issue] (Reading Order #[N])"`
-  - Group position chip for multi-issue groups: `"Part [n] of [total] • [Group Title]"`
-- **Visual Progress Bars:**
-  - **Phase Progress:** `[██████████░░░░░░░░░░] X% (Issue N of Total in Phase)`
-  - **Overall Era Progress:** `[█████░░░░░░░░░░░░░░░] Y% (Issue N of Total in Era)`
-  - **Series Progress:** `[██████████░░░░░░░░░░] Z% (Issue N of Total in Series)`
+- **Visual Progress Bars** (in this order):
+  1. **Era Progress:** `[█████░░░░░░░░░░░░░░░] X% (Issue N of Total in Era)`
+  2. **Phase Progress:** `[██████████░░░░░░░░░░] Y% (Issue N of Total in Phase)`
+  3. **Group Progress:** `[████████░░░░░░░░░░░░] Z% (Issue N of Total in [Group Title])`
 - **Quick Controls:**
   - `◀ Previous Issue` button (steps selection to preceding issue in reading order)
   - `Next Issue ▶` button (steps selection to next issue in reading order)
@@ -286,7 +283,7 @@ The front page shows the reading order as a **single-row horizontal carousel** s
 | :--- | :--- |
 | **Milestone 1: Project Setup** | • Initialize Vite + React + TypeScript + Tailwind CSS<br>• Setup GitHub Pages configuration (`vite.config.ts`)<br>• Setup GitHub Actions deployment workflow |
 | **Milestone 2: Placeholder Data Structure** | • Create `src/data/fromTheAshesData.ts` with placeholder series and issues structured across phases and groups (series runs & crossovers)<br>• Setup placeholder covers, issue numbers, and library URLs |
-| **Milestone 3: Dynamic Progression Logic** | • Implement `useProgression` hook calculating Phase %, Era %, Series % based on selected issue<br>• Build sticky `ProgressionHUD` with progress bars and Prev/Next controls |
+| **Milestone 3: Dynamic Progression Logic** | • Implement `useProgression` hook calculating Era %, Phase %, Group % based on selected issue<br>• Build sticky `ProgressionHUD` with progress bars and Prev/Next controls |
 | **Milestone 4: Issue Cards & Reading Order UI** | • Build the single-row reading order carousel, centered on the current issue<br>• Build collapsible group cards (first-issue cover when collapsed, issues inline when expanded; only the current issue's group is open)<br>• Build responsive issue cards with cover thumbnails, series badges, and library links<br>• Visual cues for "Active Issue", "Preceding Issues", and "Upcoming Issues" |
 | **Milestone 5: Series & Phase Filtering** | • Implement Series filter chips and Phase navigation tabs<br>• URL query param sync (`?series=...&issue=...`) for bookmarking and sharing |
 | **Milestone 6: Build & GitHub Pages Deployment** | • Run `npm run build` verification<br>• Push to GitHub repository and verify live GitHub Pages site |

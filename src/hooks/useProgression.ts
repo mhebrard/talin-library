@@ -126,9 +126,8 @@ export function useProgression(
         eraProgressPercent: 0,
         eraCurrentIndex: 0,
         eraTotalCount,
-        seriesCurrentIndex: 0,
-        seriesTotalCount: 0,
         selectedGroup: null,
+        groupProgressPercent: 0,
         groupCurrentIndex: 0,
         groupTotalCount: 0,
         previousIssue: null,
@@ -143,14 +142,11 @@ export function useProgression(
     const eraCurrentIndex = selectedIssue.readingOrderNumber;
     const eraProgressPercent = Math.round((eraCurrentIndex / eraTotalCount) * 100);
 
-    // Series progression
-    const seriesIssues = allEnrichedIssues.filter((i) => i.seriesId === selectedIssue.seriesId);
-    const seriesCurrentIndex =
-      seriesIssues.findIndex((i) => i.id === selectedIssue.id) + 1;
-    const seriesTotalCount = seriesIssues.length;
-
     // Group progression
     const selectedGroup = allEnrichedGroups.find((g) => g.id === selectedIssue.groupId) || null;
+    const groupTotalCount = selectedGroup ? selectedGroup.issues.length : 1;
+    const groupCurrentIndex = selectedIssue.groupPosition;
+    const groupProgressPercent = Math.round((groupCurrentIndex / groupTotalCount) * 100);
 
     // Adjacent issues in reading order
     const currentIndexInAll = allEnrichedIssues.findIndex((i) => i.id === selectedIssue.id);
@@ -166,11 +162,10 @@ export function useProgression(
       eraProgressPercent,
       eraCurrentIndex,
       eraTotalCount,
-      seriesCurrentIndex: Math.max(1, seriesCurrentIndex),
-      seriesTotalCount,
       selectedGroup,
-      groupCurrentIndex: selectedIssue.groupPosition,
-      groupTotalCount: selectedGroup ? selectedGroup.issues.length : 1,
+      groupProgressPercent,
+      groupCurrentIndex,
+      groupTotalCount,
       previousIssue,
       nextIssue,
     };
