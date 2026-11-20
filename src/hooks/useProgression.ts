@@ -1,5 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Era, Series, EnrichedIssue, ProgressionStats, composeIssueId } from '../data/types';
+import {
+  Era,
+  Series,
+  EnrichedIssue,
+  EnrichedGroup,
+  ProgressionStats,
+  composeIssueId,
+} from '../data/types';
 import { LIBRARY_SERIES } from '../data/seriesData';
 
 export function useProgression(
@@ -26,33 +33,72 @@ export function useProgression(
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Dynamically enrich all issues with reading sequence order, phase info, and series mapping
-  const allEnrichedIssues = useMemo(() => {
-    const list: EnrichedIssue[] = [];
+  // Dynamically enrich all groups and issues with reading sequence order, phase/group info, and series mapping
+  const { allEnrichedGroups, allEnrichedIssues } = useMemo(() => {
+    const groups: EnrichedGroup[] = [];
+    const issues: EnrichedIssue[] = [];
     let masterReadingOrder = 1;
 
-    era.phases.forEach((phase) => {
-      phase.issues.forEach((rawIssue, phaseIdx) => {
-        const seriesDef = seriesMap[rawIssue.seriesId] || {
-          id: rawIssue.seriesId,
-          title: rawIssue.seriesId,
-          shortTitle: rawIssue.seriesId,
-          launchYear: era.startYear,
-          color: 'slate',
-        };
+    const resolveSeries = (seriesId: string): Series =>
+      seriesMap[seriesId] || {
+        id: seriesId,
+        title: seriesId,
+        shortTitle: seriesId,
+        launchYear: era.startYear,
+        color: 'slate',
+      };
 
-        list.push({
+    era.phases.forEach((phase) => {
+      let phaseReadingOrder = 1;
+
+      phase.groups.forEach((rawGroup, groupIdx) => {
+        const groupId = rawGroup.id || `${phase.id}-group-${groupIdx + 1}`;
+
+        const groupIssues: EnrichedIssue[] = rawGroup.issues.map((rawIssue, issueIdx) => ({
           ...rawIssue,
           id: composeIssueId(rawIssue.seriesId, rawIssue.issueNumber),
           readingOrderNumber: masterReadingOrder++,
-          phaseReadingOrderNumber: phaseIdx + 1,
+          phaseReadingOrderNumber: phaseReadingOrder++,
           phaseId: phase.id,
-          series: seriesDef,
+          groupId,
+          groupPosition: issueIdx + 1,
+          series: resolveSeries(rawIssue.seriesId),
+        }));
+
+        if (groupIssues.length === 0) return;
+
+        const distinctSeries: Series[] = [];
+        groupIssues.forEach((issue) => {
+          if (!distinctSeries.some((s) => s.id === issue.seriesId)) distinctSeries.push(issue.series);
         });
+
+        const kind = distinctSeries.length > 1 ? 'crossover' : 'series';
+        const first = groupIssues[0];
+        const last = groupIssues[groupIssues.length - 1];
+        const seriesLabel = first.series.shortTitle || first.series.title;
+        const defaultTitle =
+          kind === 'crossover'
+            ? 'Crossover'
+            : groupIssues.length === 1
+            ? `${seriesLabel} #${first.issueNumber}`
+            : `${seriesLabel} #${first.issueNumber}–${last.issueNumber}`;
+
+        groups.push({
+          id: groupId,
+          title: rawGroup.title || defaultTitle,
+          kind,
+          description: rawGroup.description,
+          phaseId: phase.id,
+          series: distinctSeries,
+          issues: groupIssues,
+          readingOrderStart: first.readingOrderNumber,
+          readingOrderEnd: last.readingOrderNumber,
+        });
+        issues.push(...groupIssues);
       });
     });
 
-    return list;
+    return { allEnrichedGroups: groups, allEnrichedIssues: issues };
   }, [era, seriesMap]);
 
   // Find currently selected issue
@@ -80,27 +126,27 @@ export function useProgression(
         eraProgressPercent: 0,
         eraCurrentIndex: 0,
         eraTotalCount,
-        seriesCurrentIndex: 0,
-        seriesTotalCount: 0,
+        selectedGroup: null,
+        groupProgressPercent: 0,
+        groupCurrentIndex: 0,
+        groupTotalCount: 0,
         previousIssue: null,
         nextIssue: null,
       };
     }
 
-    const currentPhase =
-      era.phases.find((p) => p.id === selectedIssue.phaseId) || era.phases[0];
-    const phaseTotalCount = currentPhase.issues.length;
+    const phaseTotalCount = allEnrichedIssues.filter((i) => i.phaseId === selectedIssue.phaseId).length;
     const phaseCurrentIndex = selectedIssue.phaseReadingOrderNumber;
     const phaseProgressPercent = Math.round((phaseCurrentIndex / phaseTotalCount) * 100);
 
     const eraCurrentIndex = selectedIssue.readingOrderNumber;
     const eraProgressPercent = Math.round((eraCurrentIndex / eraTotalCount) * 100);
 
-    // Series progression
-    const seriesIssues = allEnrichedIssues.filter((i) => i.seriesId === selectedIssue.seriesId);
-    const seriesCurrentIndex =
-      seriesIssues.findIndex((i) => i.id === selectedIssue.id) + 1;
-    const seriesTotalCount = seriesIssues.length;
+    // Group progression
+    const selectedGroup = allEnrichedGroups.find((g) => g.id === selectedIssue.groupId) || null;
+    const groupTotalCount = selectedGroup ? selectedGroup.issues.length : 1;
+    const groupCurrentIndex = selectedIssue.groupPosition;
+    const groupProgressPercent = Math.round((groupCurrentIndex / groupTotalCount) * 100);
 
     // Adjacent issues in reading order
     const currentIndexInAll = allEnrichedIssues.findIndex((i) => i.id === selectedIssue.id);
@@ -116,12 +162,14 @@ export function useProgression(
       eraProgressPercent,
       eraCurrentIndex,
       eraTotalCount,
-      seriesCurrentIndex: Math.max(1, seriesCurrentIndex),
-      seriesTotalCount,
+      selectedGroup,
+      groupProgressPercent,
+      groupCurrentIndex,
+      groupTotalCount,
       previousIssue,
       nextIssue,
     };
-  }, [selectedIssue, era, allEnrichedIssues]);
+  }, [selectedIssue, allEnrichedIssues, allEnrichedGroups]);
 
   // Update URL and state
   const selectIssue = useCallback((seriesId: string, issueNumber: string | number) => {
@@ -156,6 +204,7 @@ export function useProgression(
   }, [stats.nextIssue, selectIssue]);
 
   return {
+    allEnrichedGroups,
     allEnrichedIssues,
     selectedIssue,
     stats,

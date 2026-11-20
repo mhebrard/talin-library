@@ -41,7 +41,7 @@ export const PhaseNav: FC<PhaseNavProps> = ({
               : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800 hover:border-slate-700'
           }`}
         >
-          Phase {phase.number} ({phase.issues.length})
+          Phase {phase.number} ({phase.groups.reduce((n, g) => n + g.issues.length, 0)})
         </button>
       ))}
     </div>

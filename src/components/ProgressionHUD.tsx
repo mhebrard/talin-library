@@ -4,13 +4,49 @@ import { ProgressionStats } from '../data/types';
 
 interface ProgressionHUDProps {
   stats: ProgressionStats;
+  eraTitle: string;
+  phaseLabel: string;               // e.g. "Phase 1"
+
   onClear: () => void;
   onPrevious: () => void;
   onNext: () => void;
 }
 
+interface ProgressBarProps {
+  label: string;
+  percent: number;
+  current: number;
+  total: number;
+  caption: string;
+  barClass: string;
+  textClass: string;
+}
+
+const ProgressBar: FC<ProgressBarProps> = ({ label, percent, current, total, caption, barClass, textClass }) => (
+  <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80">
+    <div className="flex justify-between items-center text-xs mb-1.5">
+      <span className="font-semibold text-slate-300 truncate pr-2">{label}</span>
+      <span className={`font-extrabold ${textClass}`}>{percent}%</span>
+    </div>
+    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+      <div
+        className={`${barClass} h-2 rounded-full transition-all duration-300 ease-out`}
+        style={{ width: `${percent}%` }}
+      />
+    </div>
+    <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
+      <span>
+        Issue {current} of {total}
+      </span>
+      <span className="truncate pl-2">{caption}</span>
+    </div>
+  </div>
+);
+
 export const ProgressionHUD: FC<ProgressionHUDProps> = ({
   stats,
+  eraTitle,
+  phaseLabel,
   onClear,
   onPrevious,
   onNext,
@@ -111,71 +147,35 @@ export const ProgressionHUD: FC<ProgressionHUDProps> = ({
           </div>
         </div>
 
-        {/* Progress Bars Grid */}
+        {/* Progress Bars Grid: 1. Era / 2. Phase / 3. Group */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-          {/* Phase Progress */}
-          <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80">
-            <div className="flex justify-between items-center text-xs mb-1.5">
-              <span className="font-semibold text-slate-300">Phase Progress</span>
-              <span className="font-extrabold text-yellow-400">
-                {stats.phaseProgressPercent}%
-              </span>
-            </div>
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-yellow-500 h-2 rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${stats.phaseProgressPercent}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
-              <span>Issue {stats.phaseCurrentIndex} of {stats.phaseTotalCount}</span>
-              <span>Phase {selectedIssue.phaseId === 'phase-1' ? '1' : '2'}</span>
-            </div>
-          </div>
-
-          {/* Era Progress */}
-          <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80">
-            <div className="flex justify-between items-center text-xs mb-1.5">
-              <span className="font-semibold text-slate-300">Overall Era Progress</span>
-              <span className="font-extrabold text-amber-400">
-                {stats.eraProgressPercent}%
-              </span>
-            </div>
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-amber-500 h-2 rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${stats.eraProgressPercent}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
-              <span>Issue {stats.eraCurrentIndex} of {stats.eraTotalCount}</span>
-              <span>From the Ashes</span>
-            </div>
-          </div>
-
-          {/* Series Progress */}
-          <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80">
-            <div className="flex justify-between items-center text-xs mb-1.5">
-              <span className="font-semibold text-slate-300 truncate pr-2">
-                {selectedIssue.series.title}
-              </span>
-              <span className="font-extrabold text-blue-400">
-                {Math.round((stats.seriesCurrentIndex / stats.seriesTotalCount) * 100)}%
-              </span>
-            </div>
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
-                style={{
-                  width: `${Math.round((stats.seriesCurrentIndex / stats.seriesTotalCount) * 100)}%`,
-                }}
-              />
-            </div>
-            <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
-              <span>Issue {stats.seriesCurrentIndex} of {stats.seriesTotalCount}</span>
-              <span>This Series</span>
-            </div>
-          </div>
+          <ProgressBar
+            label="Era Progress"
+            percent={stats.eraProgressPercent}
+            current={stats.eraCurrentIndex}
+            total={stats.eraTotalCount}
+            caption={eraTitle}
+            barClass="bg-amber-500"
+            textClass="text-amber-400"
+          />
+          <ProgressBar
+            label="Phase Progress"
+            percent={stats.phaseProgressPercent}
+            current={stats.phaseCurrentIndex}
+            total={stats.phaseTotalCount}
+            caption={phaseLabel}
+            barClass="bg-yellow-500"
+            textClass="text-yellow-400"
+          />
+          <ProgressBar
+            label={stats.selectedGroup?.title ?? 'Group'}
+            percent={stats.groupProgressPercent}
+            current={stats.groupCurrentIndex}
+            total={stats.groupTotalCount}
+            caption={stats.selectedGroup?.kind === 'crossover' ? 'This Crossover' : 'This Group'}
+            barClass="bg-blue-500"
+            textClass="text-blue-400"
+          />
         </div>
       </div>
     </aside>
